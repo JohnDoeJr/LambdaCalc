@@ -17,6 +17,14 @@ let w = Application(Lambda("x", Lambda("y", Lambda("z", Application(Application(
 let sksksk = Application(Application(Application(Application(Application(s, k), s), k), s), k);;
 let sk = Application(s, k);;
 let sks = Application(Application(Application(Application(sk, s), k), s), k);;
+let first = Application(Application(Application(Lambda("x", Lambda("y", Lambda("z", Application(Application(Var "z", Var "y"), Var "x")))), Var "y"), Var "z"), Lambda("p", Lambda("q", Var "q")));;
+let second = Application(Application(
+				Lambda("y", Lambda("z", Application(Var "z", Var "y"))), 
+				Application(
+					Lambda("x", Application(Application(Var "x", Var "x"), Var "x")), 
+					Lambda("x", Application(Application(Var "x", Var "x"), Var "x"))
+				)
+			), Lambda("y", Application(Application(Var "x", Var "x"), Var "x")));;
 
 let rec term_has_var term var =
 	match term with
@@ -47,16 +55,16 @@ let rec apply_term t1 t2 =
 			match t11, t12 with
 				| Var v1, t12 -> Application(t1, t2)
 				| _ -> apply_term (apply_term t11 t12) t2;;
-let rec is_term_normal term =
+let rec is_term_only_vars term =
 	match term with
 		| Var v -> true
 		| Lambda (v, t) -> false
-		| Application (t1, t2) -> (is_term_normal t1) && (is_term_normal t2);;
+		| Application (t1, t2) -> (is_term_only_vars t1) && (is_term_only_vars t2);;
 
 let rec normalize term =
 	match term with
 		| Var v -> term
 		| Lambda (v, t) -> Lambda (v, normalize t)
-		| Application (t1, t2) -> if is_term_normal term then term else normalize (apply_term t1 t2);;
+		| Application (t1, t2) -> if is_term_only_vars term then term else normalize (apply_term t1 t2);;
 
-print_term(normalize (Application(sk, s)));;
+print_term(normalize (second));;
