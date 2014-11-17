@@ -30,15 +30,18 @@ let rec substitute t1 var t2 =
 		| Application (t11, t12) -> Application (substitute t11 var t2, substitute t12 var t2);;
 
 let rec apply_term t1 t2 =
-	match t1, t2 with
-		| Var v, Application (t21, t22) -> Application(Var v, (apply_term t21 t22))
-		| Var v, t2 -> Application(Var v, t2)
-		| Lambda (v, t), t2 -> substitute t v t2
-		| Application (t11, t12), t2 -> 
+	match t1 with
+		| Var v -> begin
+				match t2 with
+					| Application (t21, t22) -> Application(Var v, (apply_term t21 t22))
+					| t2 -> Application(Var v, t2)
+				end
+		| Lambda(v, t) -> substitute t v t2
+		| Application (t11, t12) ->
 			match t11, t12 with
 				| Var v1, t12 -> Application(t1, t2)
 				| _ -> apply_term (apply_term t11 t12) t2;;
-				
+
 let rec is_term_only_vars term =
 	match term with
 		| Var v -> true
