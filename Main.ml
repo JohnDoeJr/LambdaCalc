@@ -8,25 +8,6 @@ let rec print_term t =
 			print_string("("); print_term t1; print_string(")");
 			print_string("("); print_term t2; print_string(")");;
 
-let s = Lambda("x", Lambda("y", Lambda("z", Application(Application(Var "x", Var "z"), Application(Var "y", Var "z")))));;
-let k = Lambda("x", Lambda("y", Var "x"));;
-let x = Application(Lambda("x", Lambda("y", Lambda("z", Application(Application(Var "x", Var "z"), Application(Var "y", Var "z"))))), Lambda("x", Lambda("y", Var "x")));;
-let y = Application(Lambda("x", Lambda("y", Lambda("z", Application(Var "x", Application(Var "z", Application(Var "y", Var "z")))))), Lambda("x", Lambda("y", Var "x")));;
-let z = Application(Lambda("x", Application(Var "x", Var "x")), Lambda("x", Application(Var "x", Var "x")));;
-let w = Application(Lambda("x", Lambda("y", Lambda("z", Application(Application(Application(Var "x", Var "z"), Var "y"), Var "z")))), Lambda("x", Lambda("y", Var "x")));;
-let sksksk = Application(Application(Application(Application(Application(s, k), s), k), s), k);;
-let sk = Application(s, k);;
-let sks = Application(Application(Application(Application(sk, s), k), s), k);;
-let first = Application(Application(Application(Lambda("x", Lambda("y", Lambda("z", Application(Application(Var "z", Var "y"), Var "x")))), Var "y"), Var "z"), Lambda("p", Lambda("q", Var "q")));;
-let second = Application(Application(
-				Lambda("y", Lambda("z", Application(Var "z", Var "y"))), 
-				Application(
-					Lambda("x", Application(Application(Var "x", Var "x"), Var "x")), 
-					Lambda("x", Application(Application(Var "x", Var "x"), Var "x"))
-				)
-			), Lambda("y", Application(Application(Var "x", Var "x"), Var "x")));;
-let incrementZero = Application(Lambda("n", Lambda("x", Lambda("y", Application(Var "x", Application(Application(Var "n", Var "x"), Var "y"))))), Lambda("x", Lambda("y", Var "y")));;
-
 let rec term_has_var term var =
 	match term with
 		| Var v -> if Var v = Var var then true else false
@@ -57,6 +38,7 @@ let rec apply_term t1 t2 =
 			match t11, t12 with
 				| Var v1, t12 -> Application(t1, t2)
 				| _ -> apply_term (apply_term t11 t12) t2;;
+				
 let rec is_term_only_vars term =
 	match term with
 		| Var v -> true
@@ -70,6 +52,36 @@ let rec normalize term =
 		| Var v -> term
 		| Lambda (v, t) -> Lambda (v, normalize t)
 		| Application (t1, t2) -> if is_term_only_vars term then term else normalize (apply_term t1 t2);;
+
+(* s = \xyz.x z (y z) *)
+let s = Lambda("x", Lambda("y", Lambda("z", Application(Application(Var "x", Var "z"), Application(Var "y", Var "z")))));;
+(* k = \xy.x *)
+let k = Lambda("x", Lambda("y", Var "x"));;
+(* z = (\x.x x)(\x.x x) *)
+let z = Application(Lambda("x", Application(Var "x", Var "x")), Lambda("x", Application(Var "x", Var "x")));;
+(* sksksk *)
+let sksksk = Application(Application(Application(Application(Application(s, k), s), k), s), k);;
+(* sk *)
+let sk = Application(s, k);;
+(* sksksks *)
+let sks = Application(Application(Application(Application(sk, s), k), s), k);;
+(* (\xyz.zyx)yz(\pq.q) *)
+let first = Application(Application(Application(Lambda("x", Lambda("y", Lambda("z", Application(Application(Var "z", Var "y"), Var "x")))), Var "y"), Var "z"), Lambda("p", Lambda("q", Var "q")));;
+(* (\yz.zy)(\x.xxx)(\x.xxx)(\y.xxx) *)
+let second = Application(Application(
+				Lambda("y", Lambda("z", Application(Var "z", Var "y"))), 
+				Application(
+					Lambda("x", Application(Application(Var "x", Var "x"), Var "x")), 
+					Lambda("x", Application(Application(Var "x", Var "x"), Var "x"))
+				)
+			), Lambda("y", Application(Application(Var "x", Var "x"), Var "x")));;
+(* 
+0 = \xy.y
+sc n = (\nxy.x (n x y))n
+
+incrementZero = sc 0
+*)
+let incrementZero = Application(Lambda("n", Lambda("x", Lambda("y", Application(Var "x", Application(Application(Var "n", Var "x"), Var "y"))))), Lambda("x", Lambda("y", Var "y")));;
 
 print_term(normalize (first));;
 print_endline "";;
