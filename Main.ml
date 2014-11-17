@@ -25,6 +25,7 @@ let second = Application(Application(
 					Lambda("x", Application(Application(Var "x", Var "x"), Var "x"))
 				)
 			), Lambda("y", Application(Application(Var "x", Var "x"), Var "x")));;
+let incrementZero = Application(Lambda("n", Lambda("x", Lambda("y", Application(Var "x", Application(Application(Var "n", Var "x"), Var "y"))))), Lambda("x", Lambda("y", Var "y")));;
 
 let rec term_has_var term var =
 	match term with
@@ -48,10 +49,11 @@ let rec substitute t1 var t2 =
 		| Application (t11, t12) -> Application (substitute t11 var t2, substitute t12 var t2);;
 
 let rec apply_term t1 t2 =
-	match t1 with
-		| Var v -> Application (t1, t2)
-		| Lambda (v, t) -> substitute t v t2
-		| Application (t11, t12) -> 
+	match t1, t2 with
+		| Var v, Application (t21, t22) -> Application(Var v, (apply_term t21 t22))
+		| Var v, t2 -> Application(Var v, t2)
+		| Lambda (v, t), t2 -> substitute t v t2
+		| Application (t11, t12), t2 -> 
 			match t11, t12 with
 				| Var v1, t12 -> Application(t1, t2)
 				| _ -> apply_term (apply_term t11 t12) t2;;
@@ -62,9 +64,18 @@ let rec is_term_only_vars term =
 		| Application (t1, t2) -> (is_term_only_vars t1) && (is_term_only_vars t2);;
 
 let rec normalize term =
+	(* print_term term;
+	print_endline ""; *)
 	match term with
 		| Var v -> term
 		| Lambda (v, t) -> Lambda (v, normalize t)
 		| Application (t1, t2) -> if is_term_only_vars term then term else normalize (apply_term t1 t2);;
 
+print_term(normalize (first));;
+print_endline "";;
 print_term(normalize (second));;
+print_endline "";;
+print_term(normalize (sks));;
+print_endline "";;
+print_term(normalize (incrementZero));;
+(* print_term incrementZero;; *)
