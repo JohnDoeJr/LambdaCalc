@@ -1,17 +1,15 @@
 type term = Var of string | Lambda of string * term | Application of term * term;;
 
-let rec print_term t =
+let rec termToString t =
 	match t with
-		| Var v -> print_string v
-		| Lambda (v, t) -> print_string("\\" ^ v ^ "."); print_term t
-		| Application (t1, t2) -> 
-			print_string("("); print_term t1; print_string(")");
-			print_string("("); print_term t2; print_string(")");;
+		| Var v -> v
+		| Lambda (v, t) -> "\\" ^ v ^ "." ^ (termToString t)
+		| Application (t1, t2) -> "(" ^ (termToString t1) ^ ")(" ^ (termToString t2) ^ ")";;
 
 let rec term_has_var term var =
 	match term with
-		| Var v -> if Var v = Var var then true else false
-		| Lambda (v, t) -> if Var v = Var var then true else term_has_var t v
+		| Var v -> Var v = Var var
+		| Lambda (v, t) -> Var v = Var var || (term_has_var t v)
 		| Application (t1, t2) -> (term_has_var t1 var) || (term_has_var t2 var);;
 
 let rec substituteVar term var =
@@ -55,6 +53,7 @@ let rec normalize term =
 		| Var v -> term
 		| Lambda (v, t) -> Lambda (v, normalize t)
 		| Application (t1, t2) -> if is_term_only_vars term then term else normalize (apply_term t1 t2);;
+		(* | Application (t1, t2) -> normalize (apply_term t1 t2);; *)
 
 (* s = \xyz.x z (y z) *)
 let s = Lambda("x", Lambda("y", Lambda("z", Application(Application(Var "x", Var "z"), Application(Var "y", Var "z")))));;
@@ -80,17 +79,15 @@ let second = Application(Application(
 			), Lambda("y", Application(Application(Var "x", Var "x"), Var "x")));;
 (* 
 0 = \xy.y
-sc n = (\nxy.x (n x y))n
+sc n = \nxy.x (n x y)
 
 incrementZero = sc 0
 *)
-let incrementZero = Application(Lambda("n", Lambda("x", Lambda("y", Application(Var "x", Application(Application(Var "n", Var "x"), Var "y"))))), Lambda("x", Lambda("y", Var "y")));;
+let sc = Lambda("n", Lambda("x", Lambda("y", Application(Var "x", Application(Application(Var "n", Var "x"), Var "y")))));;
+let zero = Lambda("x", Lambda("y", Var "y"));;
 
-print_term(normalize (first));;
-print_endline "";;
-print_term(normalize (second));;
-print_endline "";;
-print_term(normalize (sks));;
-print_endline "";;
-print_term(normalize (incrementZero));;
+print_endline(termToString(normalize(first)));;
+print_endline(termToString(normalize(second)));;
+print_endline(termToString(normalize (sks)));;
+print_endline(termToString(normalize(Application(sc, zero))));;
 (* print_term incrementZero;; *)
